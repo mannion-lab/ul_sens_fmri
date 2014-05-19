@@ -2,23 +2,64 @@ import os
 
 import numpy as np
 import PIL
+import psychopy.visual
 
 import ul_sens_fmri.config
 
 
-def _get_img_fragments(conf):
+class Stim(object):
 
-    frags = np.empty(
-        (
-            conf.exp.n_img,
-            2,  # upper/lower
-            2,  # left/right
-            conf.stim.img_aperture_size_pix,
-            conf.stim.img_aperture_size_pix,
-            3  # RGB
-        )
-    )
-    frags.fill(np.NAN)
+    def __init__(
+        self,
+        win,
+        conf,
+        fragments
+    ):
+
+        self._win = win
+        self._conf = conf
+        self._fragments = fragments
+
+        self._textures = {}
+
+        for vert in ["a", "b"]:
+            for horiz in ["l", "r"]:
+
+                tex = psychopy.visual.GratingStim(
+                    win=self._win,
+                    size=[conf.stim.ap_size_deg] * 2,
+                    units="deg",
+                    interpolate=True,
+                    sf=1.0 / conf.stim.ap_size_deg,
+                    mask="raisedCos",
+                    pos=conf.stim.ap_pos_deg[vert + horiz]
+                )
+
+                self._textures[vert + horiz] = tex
+
+    def set_img(self, img_id, pres_vert_loc, src_vert_loc):
+
+        for horiz in ["l", "r"]:
+            self._textures[pres_vert_loc + horiz].setTex(
+                np.flipud(self._fragments[img_id][src_vert_loc + horiz])
+            )
+
+    def set_contrast(self, vert_loc, contrast):
+
+        for horiz in ["l", "r"]:
+            self._textures[vert_loc + horiz].setContrast(
+                contrast
+            )
+
+    def draw(self):
+
+        for vert in ["a", "b"]:
+            for horiz in ["l", "r"]:
+                self._textures[vert + horiz].draw()
+
+
+
+def _get_img_fragments(conf):
 
     frags = {}
 
@@ -63,6 +104,8 @@ def _get_img_fragments(conf):
 
                 img_frag = img_frag / 255.0 * 2.0 - 1.0
 
+                # these are store un-vertically flipped - they will need to be
+                # flipped before use in PsychoPy
                 img_frags[vert + horiz] = img_frag
 
         frags[img_id] = img_frags

@@ -74,6 +74,17 @@ def _get_stim_conf():
                 cols
             ]
 
+    stim_conf.ap_size_deg = 4.5
+    stim_conf.ap_ecc_deg = 5.37
+
+    ap_offset_deg = stim_conf.ap_ecc_deg / np.sqrt(2.0)
+
+    stim_conf.ap_pos_deg = {
+        "al": [-ap_offset_deg, +ap_offset_deg],
+        "ar": [+ap_offset_deg, +ap_offset_deg],
+        "bl": [-ap_offset_deg, -ap_offset_deg],
+        "br": [+ap_offset_deg, -ap_offset_deg]
+    }
 
     return stim_conf
 
