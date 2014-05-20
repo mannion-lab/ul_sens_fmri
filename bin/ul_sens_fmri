@@ -5,16 +5,14 @@ import argparse
 
 import runcmd
 
+import ul_sens_fmri.config
+import ul_sens_fmri.exp
 
-conf = ul_sens.config.get_conf()
+conf = ul_sens_fmri.config.get_conf()
 
 
 def run_prep_images(args):
-    ul_sens.exp.prep_images(conf)
-
-
-def run_prep_subj(args):
-    ul_sens.exp.prep_subj(conf, args.subj_id)
+    ul_sens_fmri.exp.prep_images(conf)
 
 
 def run_exp(args):
@@ -25,13 +23,12 @@ def run_exp(args):
     )
 
     for run_num in run_range:
-        ul_sens.exp.run(conf, args.subj_id, run_num)
-
-def subj_summ(args):
-    ul_sens.summary.subj_summ(conf=conf, subj_id=args.subj_id)
-
-def instruct(args):
-    ul_sens.instruct.instruct(conf)
+        ul_sens_fmri.exp.run(
+            conf=conf,
+            subj_id=args.subj_id,
+            run_num=run_num,
+            serial_port=args.serial_port
+        )
 
 
 parser = argparse.ArgumentParser()
@@ -41,10 +38,6 @@ subparsers = parser.add_subparsers(help="")
 prep_parser = subparsers.add_parser("prep_images")
 prep_parser.set_defaults(func=run_prep_images)
 
-subj_parser = subparsers.add_parser("prep_subj")
-subj_parser.add_argument("subj_id", help="Subject ID")
-subj_parser.set_defaults(func=run_prep_subj)
-
 exp_parser = subparsers.add_parser("exp")
 exp_parser.add_argument("subj_id", help="Subject ID")
 exp_parser.add_argument("--start_run", help="Start run", type=int, default=1)
@@ -52,16 +45,15 @@ exp_parser.add_argument(
     "--end_run",
     help="End run",
     type=int,
-    default=conf.n_runs
+    default=conf.exp.n_runs
+)
+exp_parser.add_argument(
+    "--serial_port",
+    help="Serial port",
+    type=str,
+    default="/dev/ttyUSB0"
 )
 exp_parser.set_defaults(func=run_exp)
-
-summ_parser = subparsers.add_parser("summary")
-summ_parser.add_argument("subj_id", help="Subject ID")
-summ_parser.set_defaults(func=subj_summ)
-
-instruct_parser = subparsers.add_parser("instruct")
-instruct_parser.set_defaults(func=instruct)
 
 args = parser.parse_args()
 
