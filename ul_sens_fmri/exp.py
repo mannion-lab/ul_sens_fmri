@@ -30,24 +30,7 @@ def run(conf, subj_id, run_num, serial_port=None):
 
         stim = ul_sens_fmri.stim.Stim(win=win, conf=conf, fragments=frags)
 
-        # init the first trial
-        for i_pres in xrange(2):
-            img_id = run_seq[i_pres, 0, 2]
-
-            if img_id == 0 or run_seq[i_pres, 0, 0] > 0:
-                stim.set_contrast(conf.exp.pres_locs[i_pres], 0.0)
-            else:
-                src_vert_loc = conf.exp.src_locs[
-                    int(run_seq[i_pres, 0, 1] - 1)
-                ]
-                stim.set_img(
-                    img_id=img_id,
-                    pres_vert_loc=conf.exp.pres_locs[i_pres],
-                    src_vert_loc=src_vert_loc
-                )
-                stim.set_contrast(conf.exp.pres_locs[i_pres], 1.0)
-
-            run_seq[i_pres, 0, 4] = 1
+        (stim, run_seq) = update_stim(conf, stim, run_seq, -1.0)
 
         run_clock = psychopy.core.Clock()
 
@@ -68,64 +51,63 @@ def run(conf, subj_id, run_num, serial_port=None):
             for key in keys:
                 keep_going = False
 
-            for i_pres in xrange(2):
-                # indice of the trial
-                i_trial = np.where(flip_time >= run_seq[i_pres, :, 0])[0]
+            (stim, run_seq) = update_stim(conf, stim, run_seq, flip_time)
 
-                if len(i_trial) == 0:
-                    if flip_time < 2.0:
-                        stim.set_contrast(conf.exp.pres_locs[i_pres], 0.0)
-                        break
-                    else:
-                        raise ValueError("Timing error")
-                else:
-                    i_trial = i_trial[-1]
 
-                trial_time = flip_time - run_seq[i_pres, i_trial, 0]
 
-                if trial_time > conf.exp.stim_on_s:
+def update_stim(conf, stim, run_seq, flip_time):
 
-                    if run_seq[i_pres, i_trial, 4] != 3:
+    for i_pres in xrange(2):
 
-                        stim.set_contrast(conf.exp.pres_locs[i_pres], 0.0)
-                        run_seq[i_pres, i_trial, 4] = 3
+        pres_loc = conf.exp.pres_locs[i_pres]
 
-                    if i_trial < conf.exp.n_run_trials:
+        i_trial = np.where(flip_time >= run_seq[i_pres, :, 0])[0]
 
-                        if run_seq[i_pres, i_trial + 1, 4] == 0:
+        if len(i_trial) == 0:
+            if flip_time < 2.0:
+                stim.set_contrast(conf.exp.pres_locs[i_pres], 0.0)
 
-                            next_img_id = run_seq[i_pres, i_trial + 1, 2]
-                            next_src_loc = conf.exp.src_locs[
-                                int(run_seq[i_pres, i_trial + 1, 1] - 1)
-                            ]
+                if run_seq[i_pres, 0, 4] == 0:
+                    stim.set_img(
+                        img_id=run_seq[i_pres, 0, 2],
+                        pres_vert_loc=pres_loc,
+                        src_vert_loc=conf.exp.src_locs[
+                            int(run_seq[i_pres, 0, 1]) - 1
+                        ]
+                    )
+            else:
+                raise ValueError("Timing error")
+        else:
 
-                            if next_img_id == 0:
-                                stim.set_contrast(
-                                    conf.exp.pres_locs[i_pres],
-                                    0.0
-                                )
-                            else:
-                                stim.set_img(
-                                    img_id=next_img_id,
-                                    pres_vert_loc=conf.exp.pres_locs[i_pres],
-                                    src_vert_loc=next_src_loc
-                                )
+            i_trial = i_trial[-1]
 
-                            run_seq[i_pres, i_trial + 1, 4] = 1
+            trial_time = flip_time - run_seq[i_pres, i_trial, 0]
 
-                else:
+            if trial_time <= conf.exp.stim_on_s:
+                stim.set_contrast(pres_loc, 1.0)
 
-                    if run_seq[i_pres, i_trial, 4] != 2:
+            else:
+                stim.set_contrast(pres_loc, 0.0)
 
-                        if run_seq[i_pres, i_trial, 2] != 0:
-                            contrast = 1.0
-                        else:
-                            contrast = 0.0
+                if (
+                    i_trial < (conf.exp.n_run_trials - 1) and
+                    run_seq[i_pres, i_trial + 1, 4] == 0
+                ):
 
-                        stim.set_contrast(conf.exp.pres_locs[i_pres], contrast)
+                    next_img_id = run_seq[i_pres, i_trial + 1, 2]
+                    next_src_loc = conf.exp.src_locs[
+                        int(run_seq[i_pres, i_trial + 1, 1] - 1)
+                    ]
 
-                        run_seq[i_pres, i_trial, 4] = 2
+                    stim.set_img(
+                        img_id=next_img_id,
+                        pres_vert_loc=pres_loc,
+                        src_vert_loc=next_src_loc
+                    )
 
+                    run_seq[i_pres, i_trial + 1, 4] = 1
+
+    return (stim, run_seq)
 
 
 def init_task(conf):
