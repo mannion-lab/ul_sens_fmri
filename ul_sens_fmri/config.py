@@ -98,14 +98,65 @@ def _get_exp_conf():
 
     exp_conf = ConfigContainer()
 
+    exp_conf.log_data_path = "/sci/study/ul_sens_fmri/log_data"
+    exp_conf.log_data_path = "/home/damien/code/ul_sens_fmri"
+
+    exp_conf.exp_id = "ul_sens_fmri"
+
+    exp_conf.monitor_name = "BOLDscreen"
+    exp_conf.screen_size = (1920, 1200)
+
     exp_conf.environment = "garden"
 
     exp_conf.n_img = 30
+
+    exp_conf.pres_locs = ["a", "b"]
+
+    # fragment source locations - above and below
+    exp_conf.src_locs = ["a", "b"]
+
+    exp_conf.n_src_locs = len(exp_conf.src_locs)
+
+    # total number of event trials
+    exp_conf.n_stim_trials = exp_conf.n_img * exp_conf.n_src_locs
+
+    # proportion of 'null' trials
+    exp_conf.null_prop = 0.25
+
+    # number of 'null' trials
+    exp_conf.n_null_trials = exp_conf.n_stim_trials * exp_conf.null_prop
+
+    # check that number of null trials is an integer
+    np.testing.assert_almost_equal(np.mod(exp_conf.n_null_trials, 1.0), 0.0)
+
+    exp_conf.n_null_trials = int(exp_conf.n_null_trials)
+
+    # total length of the run sequence
+    exp_conf.n_seq_trials = exp_conf.n_stim_trials + exp_conf.n_null_trials
+
+    # number of trials to wrap-around at the beginning
+    exp_conf.n_pre_trials = 8
+
+    # total number of trials in a run - sequence plus pre
+    exp_conf.n_run_trials = exp_conf.n_seq_trials + exp_conf.n_pre_trials
+
+    exp_conf.trial_len_s = 4.0
+
+    exp_conf.run_len_s = exp_conf.n_run_trials * exp_conf.trial_len_s
+
+    exp_conf.stim_on_s = 1.0
 
     # replace this
     exp_conf.img_ids = np.arange(1, exp_conf.n_img + 1)
 
     exp_conf.vf_pos = ["al", "ar", "bl", "br"]
+
+    exp_conf.n_runs = 10
+
+
+    exp_conf.task_set = np.arange(10)
+    exp_conf.task_polarity = [-1, +1]
+    exp_conf.task_rate_hz = 3.0
 
     return exp_conf
 
