@@ -39,9 +39,15 @@ class Stim(object):
     def set_img(self, img_id, pres_vert_loc, src_vert_loc):
 
         for horiz in ["l", "r"]:
-            self._textures[pres_vert_loc + horiz].setTex(
-                np.flipud(self._fragments[img_id][src_vert_loc + horiz])
-            )
+
+            if img_id == 0:
+                img = np.zeros((4,4))
+            else:
+                img = np.flipud(
+                    self._fragments[img_id][src_vert_loc + horiz]
+                )
+
+            self._textures[pres_vert_loc + horiz].setTex(img)
 
     def set_contrast(self, vert_loc, contrast):
 
