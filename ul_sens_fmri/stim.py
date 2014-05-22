@@ -63,6 +63,97 @@ class Stim(object):
                 self._textures[vert + horiz].draw()
 
 
+class Fixation(object):
+
+    def __init__(
+        self,
+        win,
+        conf
+    ):
+
+        self._win = win
+        self._conf = conf
+
+        self._init_stim()
+
+
+    def _init_stim(self):
+
+        h_frac = 0.625
+
+        l_s = [(+1, +0), (+h_frac, +1), (+0, +1), (-h_frac, +1)]
+        l_e = [(-1, +0), (-h_frac, -1), (+0, -1), (+h_frac, -1)]
+
+        self._grids = [
+            psychopy.visual.Line(
+                win=self._win,
+                start=ls,
+                end=le,
+                units="norm",
+                lineColor=[-0.25] * 3,
+                lineWidth=1.5
+            )
+            for (ls, le) in zip(l_s, l_e)
+        ]
+
+
+        grids_r_va = [ 0.5, 1.8, 3.5, 6.1, 8.5 ]
+
+        grid_lum = -0.25
+
+        # list of circle stimuli
+        self._rings = [
+            psychopy.visual.Circle(
+                win=self._win,
+                radius=grid_r_va,
+                units="deg",
+                edges=96,
+                lineColor=grid_lum,
+                lineWidth=1.5
+            )
+            for grid_r_va in grids_r_va
+        ]
+
+        self._outlines = [
+            psychopy.visual.Circle(
+                win=self._win,
+                pos=self._conf.stim.ap_pos_deg[ap],
+                units="deg",
+                edges=128,
+                radius=self._conf.stim.ap_size_deg / 2.0,
+                lineColor=[-0.25] * 3,
+                fillColor=[0] * 3,
+                lineWidth=1.5
+            )
+            for ap in ["al", "ar", "bl", "br"]
+        ]
+
+        self._fixation = psychopy.visual.Circle(
+            win=self._win,
+            radius=0.1,
+            units="deg",
+            fillColor=[-1, -1, -1],
+            lineColor=[-0.25] * 3,
+            lineWidth=2
+        )
+
+    def draw(self, draw_grid=True, draw_outlines=True, draw_centre=True):
+
+        if draw_grid:
+            _ = [grid.draw() for grid in self._grids]
+            _ = [ring.draw() for ring in self._rings]
+
+        if draw_outlines:
+            _ = [outline.draw() for outline in self._outlines]
+
+        if draw_centre:
+            self._fixation.draw()
+
+    def set_centre_polarity(self, polarity):
+
+        self._fixation.setFillColor(polarity)
+
+
 def get_img_fragments(conf):
 
     frags = {}

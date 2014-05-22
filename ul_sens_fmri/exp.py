@@ -1,16 +1,15 @@
 import os
 
 import numpy as np
-import PIL
 import psychopy.visual
 import psychopy.event
 import psychopy.core
+import serial
 
 import stimuli.psychopy_ext
 
 import ul_sens_fmri.config
 import ul_sens_fmri.stim
-
 
 
 def run(conf, subj_id, run_num, serial_port=None):
@@ -21,6 +20,11 @@ def run(conf, subj_id, run_num, serial_port=None):
 
     frags = ul_sens_fmri.stim.get_img_fragments(conf)
 
+    if serial_port is not None and serial_port != "None":
+        baud_rate = 9600
+        ser = serial.Serial(port=serial_port, baudrate=baud_rate)
+    else:
+        ser = None
 
     with stimuli.psychopy_ext.WindowManager(
         size=conf.exp.screen_size,
@@ -28,11 +32,44 @@ def run(conf, subj_id, run_num, serial_port=None):
         lut=True
     ) as win:
 
+        instr_text = psychopy.visual.TextStim(
+            win=win,
+            text="Press any button when ready for the next run",
+            color=[1] * 3,
+            pos=(0, 0.1),
+            units="norm",
+            height=0.05
+        )
+
+        fixation = ul_sens_fmri.stim.Fixation(win=win, conf=conf)
+
         stim = ul_sens_fmri.stim.Stim(win=win, conf=conf, fragments=frags)
 
         (stim, run_seq) = update_stim(conf, stim, run_seq, -1.0)
 
         run_clock = psychopy.core.Clock()
+
+        fixation.draw()
+
+        instr_text.draw()
+
+        win.flip()
+
+        resp = _get_resp(ser, wait_for_resp=True)
+
+        if "q" in resp:
+            raise Exception("User abort")
+
+        instr_text.setText("Awaiting scanner trigger...")
+        instr_text.setPos((0, -0.1))
+        instr_text.setColor([-1] * 3)
+
+        fixation.draw()
+        instr_text.draw()
+        win.flip()
+
+        # wait for the trigger
+        _await_trigger(ser)
 
         run_clock.reset()
 
@@ -40,19 +77,24 @@ def run(conf, subj_id, run_num, serial_port=None):
 
         while run_clock.getTime() < conf.exp.run_len_s and keep_going:
 
+            fixation.draw()
+
             stim.draw()
 
             win.flip()
 
             flip_time = run_clock.getTime() + (1.0 / 60.0)
 
-            keys = psychopy.event.getKeys()
+            responses = _get_resp(ser)
 
-            for key in keys:
-                keep_going = False
+            for resp in responses:
+
+                if resp == "q":
+                    raise Exception("User abort")
 
             (stim, run_seq) = update_stim(conf, stim, run_seq, flip_time)
 
+    np.save(seq_log_path, run_seq)
 
 
 def update_stim(conf, stim, run_seq, flip_time):
@@ -84,7 +126,14 @@ def update_stim(conf, stim, run_seq, flip_time):
             trial_time = flip_time - run_seq[i_pres, i_trial, 0]
 
             if trial_time <= conf.exp.stim_on_s:
-                stim.set_contrast(pres_loc, 1.0)
+
+                i_contrast = np.where(
+                    trial_time >= conf.exp.stim_contrast_profile[:, 0]
+                )[0][-1]
+
+                contrast = conf.exp.stim_contrast_profile[i_contrast, 1]
+
+                stim.set_contrast(pres_loc, contrast)
 
             else:
                 stim.set_contrast(pres_loc, 0.0)
@@ -286,7 +335,7 @@ def get_log_paths(conf, subj_id, run_num, err_if_exists=True):
 
     for log_type in ["seq", "task"]:
 
-        log_file = "{s:s}_{e:s}_run_{n:02d}_{t:s}.txt".format(
+        log_file = "{s:s}_{e:s}_run_{n:02d}_{t:s}.npy".format(
             s=subj_id,
             e=conf.exp.exp_id,
             n=run_num,
@@ -298,7 +347,7 @@ def get_log_paths(conf, subj_id, run_num, err_if_exists=True):
             log_file
         )
 
-        if os.path.exists(log_path):
+        if err_if_exists and os.path.exists(log_path):
             raise ValueError("Path " + log_path + " already exists")
 
         log_paths.append(log_path)
@@ -306,4 +355,41 @@ def get_log_paths(conf, subj_id, run_num, err_if_exists=True):
     return log_paths
 
 
+def _await_trigger(ser=None):
 
+    trigger_received = False
+
+    while not trigger_received:
+
+        responses = _get_resp(ser)
+
+        for resp in responses:
+
+            if resp in ["5", "t"]:
+                trigger_received = True
+            elif resp == "q":
+                raise Exception("User abort")
+
+
+def _get_resp(ser=None, wait_for_resp=False):
+
+    keep_waiting = True
+
+    while keep_waiting:
+
+        keys = psychopy.event.getKeys()
+
+        if ser:
+
+            n_data = ser.inWaiting()
+
+            for _ in xrange(n_data):
+
+                ser_data = str(ser.read(1))
+
+                keys.append(ser_data)
+
+        if (wait_for_resp and keys) or not wait_for_resp:
+            keep_waiting = False
+
+    return keys

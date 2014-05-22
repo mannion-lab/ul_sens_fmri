@@ -106,7 +106,7 @@ def _get_exp_conf():
     exp_conf.monitor_name = "BOLDscreen"
     exp_conf.screen_size = (1920, 1200)
 
-    exp_conf.environment = "garden"
+    exp_conf.environment = "urban"
 
     exp_conf.n_img = 30
 
@@ -153,6 +153,31 @@ def _get_exp_conf():
 
     exp_conf.n_runs = 10
 
+
+    exp_conf.stim_contrast_profile = np.empty((1000, 2))
+    exp_conf.stim_contrast_profile.fill(np.NAN)
+
+    # time lookup
+    exp_conf.stim_contrast_profile[:, 0] = np.linspace(
+        0,
+        exp_conf.stim_on_s,
+        1000
+    )
+
+    ramp_len_s = 0.1
+    ramp_len = np.sum(exp_conf.stim_contrast_profile[:, 0] <= ramp_len_s)
+
+    hann_win = np.hanning(ramp_len * 2)
+
+    ramp = np.concatenate(
+        (
+            hann_win[:ramp_len],
+            np.ones(1000 - ramp_len * 2),
+            hann_win[ramp_len:]
+        )
+    )
+
+    exp_conf.stim_contrast_profile[:, 1] = ramp
 
     exp_conf.task_set = np.arange(10)
     exp_conf.task_polarity = [-1, +1]
