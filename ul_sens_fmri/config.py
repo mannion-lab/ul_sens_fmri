@@ -99,7 +99,6 @@ def _get_exp_conf():
     exp_conf = ConfigContainer()
 
     exp_conf.log_data_path = "/sci/study/ul_sens_fmri/log_data"
-    exp_conf.log_data_path = "/home/damien/science/data/ul_sens_fmri"
 
     exp_conf.exp_id = "ul_sens_fmri"
 
