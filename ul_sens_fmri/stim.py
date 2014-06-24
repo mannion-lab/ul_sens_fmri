@@ -130,6 +130,9 @@ class Fixation(object):
         fix_lock[:32, :32] = -1
         fix_lock[32:, 32:] = -1
 
+        if np.random.choice([False, True]):
+            fix_lock = np.flipud(fix_lock)
+
         fix_loc_mask = psychopy.misc.makeRadialMatrix(64)
 
         i_mask = np.logical_and(
