@@ -99,6 +99,7 @@ def _get_exp_conf():
     exp_conf = ConfigContainer()
 
     exp_conf.log_data_path = "/sci/study/ul_sens_fmri/log_data"
+    exp_conf.log_data_path = "/home/damien/science/data/ul_sens_fmri"
 
     exp_conf.exp_id = "ul_sens_fmri"
 
@@ -148,10 +149,19 @@ def _get_exp_conf():
     # replace this
     exp_conf.img_ids = np.arange(1, exp_conf.n_img + 1)
 
+    # this was generated via:
+    #   random.choice(range(1,1001),30)
+    exp_conf.img_ids = np.array(
+        [
+            856, 933, 352, 167, 806, 327, 489, 161, 383, 052,
+            244, 338, 395, 797, 659, 224, 722, 314, 013, 376,
+            840, 307, 971, 999, 241, 706, 001, 387, 600, 686
+        ]
+    )
+
     exp_conf.vf_pos = ["al", "ar", "bl", "br"]
 
     exp_conf.n_runs = 10
-
 
     exp_conf.stim_contrast_profile = np.empty((1000, 2))
     exp_conf.stim_contrast_profile.fill(np.NAN)
