@@ -55,7 +55,7 @@ def run(conf, subj_id, run_num, serial_port=None):
             height=26,
             units="pix",
             bold=False,
-            pos=(0, 3)
+            pos=(0, 0)
         )
 
         target_text = [
