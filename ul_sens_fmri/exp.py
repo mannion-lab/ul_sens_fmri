@@ -14,9 +14,15 @@ import ul_sens_fmri.stim
 
 def run(conf, subj_id, run_num, serial_port=None):
 
-    (seq_log_path, task_log_path) = get_log_paths(conf, subj_id, run_num)
+    (seq_log_path, task_log_path, task_lut_path) = get_log_paths(
+        conf, subj_id,
+        run_num
+    )
 
     run_seq = gen_run_seq(conf)
+
+    (task_lut, task_targets) = init_task(conf)
+    task_resp = []
 
     frags = ul_sens_fmri.stim.get_img_fragments(conf)
 
@@ -29,7 +35,9 @@ def run(conf, subj_id, run_num, serial_port=None):
     with stimuli.psychopy_ext.WindowManager(
         size=conf.exp.screen_size,
         monitor=conf.exp.monitor_name,
-        lut=True
+        lut=True,
+        fullscr=True,
+        allowGUI=False
     ) as win:
 
         instr_text = psychopy.visual.TextStim(
@@ -40,6 +48,29 @@ def run(conf, subj_id, run_num, serial_port=None):
             units="norm",
             height=0.05
         )
+
+        task_text = psychopy.visual.TextStim(
+            win=win,
+            text="",
+            height=26,
+            units="pix",
+            bold=False,
+            pos=(0, 3)
+        )
+
+        target_text = [
+            psychopy.visual.TextStim(
+                win=win,
+                text=target[0],
+                height=26,
+                units="pix",
+                pos=(-60 * which_target, -10),
+                color=np.repeat(target[1], 3)
+            )
+            for (target, which_target) in zip(task_targets, [-1, +1])
+        ]
+
+        _ = [t_text.draw() for t_text in target_text]
 
         fixation = ul_sens_fmri.stim.Fixation(win=win, conf=conf)
 
@@ -64,6 +95,7 @@ def run(conf, subj_id, run_num, serial_port=None):
         instr_text.setPos((0, -0.1))
         instr_text.setColor([-1] * 3)
 
+        _ = [t_text.draw() for t_text in target_text]
         fixation.draw()
         instr_text.draw()
         win.flip()
@@ -77,7 +109,14 @@ def run(conf, subj_id, run_num, serial_port=None):
 
         while run_clock.getTime() < conf.exp.run_len_s and keep_going:
 
+            i_task = np.where(run_clock.getTime() > task_lut[:, 0])[0][-1]
+
+            task_text.setText("{t:.0f}".format(t=task_lut[i_task, 1]))
+            task_text.setColor(task_lut[i_task, 2])
+
             fixation.draw()
+
+            task_text.draw()
 
             stim.draw()
 
@@ -91,10 +130,26 @@ def run(conf, subj_id, run_num, serial_port=None):
 
                 if resp == "q":
                     raise Exception("User abort")
+                elif resp in ["5", "t"]:
+                    pass  # trigger - ignore
+                else:
+                    task_resp.extend(
+                        [
+                            (resp, run_clock.getTime())
+                        ]
+                    )
 
             (stim, run_seq) = update_stim(conf, stim, run_seq, flip_time)
 
     np.save(seq_log_path, run_seq)
+
+    task_resp_array = np.array(
+        task_resp,
+        dtype=[("key", "S10"), ("time", float)]
+    )
+
+    np.save(task_log_path, task_resp_array)
+    np.save(task_lut_path, task_lut)
 
 
 def update_stim(conf, stim, run_seq, flip_time):
@@ -333,7 +388,7 @@ def get_log_paths(conf, subj_id, run_num, err_if_exists=True):
 
     log_paths = []
 
-    for log_type in ["seq", "task"]:
+    for log_type in ["seq", "task", "task_lut"]:
 
         log_file = "{s:s}_{e:s}_run_{n:02d}_{t:s}.npy".format(
             s=subj_id,

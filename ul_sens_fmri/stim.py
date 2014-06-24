@@ -41,7 +41,7 @@ class Stim(object):
         for horiz in ["l", "r"]:
 
             if img_id == 0:
-                img = np.zeros((4,4))
+                img = np.zeros((4, 4))
             else:
                 img = np.flipud(
                     self._fragments[img_id][src_vert_loc + horiz]
@@ -76,7 +76,6 @@ class Fixation(object):
 
         self._init_stim()
 
-
     def _init_stim(self):
 
         h_frac = 0.625
@@ -96,8 +95,7 @@ class Fixation(object):
             for (ls, le) in zip(l_s, l_e)
         ]
 
-
-        grids_r_va = [ 0.5, 1.8, 3.5, 6.1, 8.5 ]
+        grids_r_va = [0.5, 1.8, 3.5, 6.1, 8.5]
 
         grid_lum = -0.25
 
@@ -128,13 +126,26 @@ class Fixation(object):
             for ap in ["al", "ar", "bl", "br"]
         ]
 
-        self._fixation = psychopy.visual.Circle(
+        fix_lock = np.ones((64, 64))
+        fix_lock[:32, :32] = -1
+        fix_lock[32:, 32:] = -1
+
+        fix_loc_mask = psychopy.misc.makeRadialMatrix(64)
+
+        i_mask = np.logical_and(
+            fix_loc_mask > 0.55,
+            fix_loc_mask < 0.8
+        )
+
+        fix_loc_mask[i_mask] = 1
+        fix_loc_mask[np.logical_not(i_mask)] = -1
+
+        self._fixation = psychopy.visual.GratingStim(
             win=self._win,
-            radius=0.1,
-            units="deg",
-            fillColor=[-1, -1, -1],
-            lineColor=[-0.25] * 3,
-            lineWidth=2
+            units="pix",
+            size=(64, 64),
+            tex=fix_lock,
+            mask=fix_loc_mask
         )
 
     def draw(self, draw_grid=True, draw_outlines=True, draw_centre=True):

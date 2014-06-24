@@ -1,21 +1,33 @@
 #! /usr/bin/env python2
 
-import sys
 import argparse
-
-import runcmd
 
 import ul_sens_fmri.config
 import ul_sens_fmri.exp
 
-conf = ul_sens_fmri.config.get_conf()
 
+def main():
 
-def run_prep_images(args):
-    ul_sens_fmri.exp.prep_images(conf)
+    conf = ul_sens_fmri.config.get_conf()
 
+    parser = argparse.ArgumentParser()
 
-def run_exp(args):
+    parser.add_argument("subj_id", help="Subject ID")
+    parser.add_argument("--start_run", help="Start run", type=int, default=1)
+    parser.add_argument(
+        "--end_run",
+        help="End run",
+        type=int,
+        default=conf.exp.n_runs
+    )
+    parser.add_argument(
+        "--serial_port",
+        help="Serial port",
+        type=str,
+        default="/dev/ttyUSB0"
+    )
+
+    args = parser.parse_args()
 
     run_range = range(
         args.start_run,
@@ -31,30 +43,5 @@ def run_exp(args):
         )
 
 
-parser = argparse.ArgumentParser()
-
-subparsers = parser.add_subparsers(help="")
-
-prep_parser = subparsers.add_parser("prep_images")
-prep_parser.set_defaults(func=run_prep_images)
-
-exp_parser = subparsers.add_parser("exp")
-exp_parser.add_argument("subj_id", help="Subject ID")
-exp_parser.add_argument("--start_run", help="Start run", type=int, default=1)
-exp_parser.add_argument(
-    "--end_run",
-    help="End run",
-    type=int,
-    default=conf.exp.n_runs
-)
-exp_parser.add_argument(
-    "--serial_port",
-    help="Serial port",
-    type=str,
-    default="/dev/ttyUSB0"
-)
-exp_parser.set_defaults(func=run_exp)
-
-args = parser.parse_args()
-
-args.func(args)
+if __name__ == "__main__":
+    main()
