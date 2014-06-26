@@ -151,6 +151,9 @@ def run(conf, subj_id, run_num, serial_port=None):
     np.save(task_log_path, task_resp_array)
     np.save(task_lut_path, task_lut)
 
+    if ser is not None:
+        ser.close()
+
 
 def update_stim(conf, stim, run_seq, flip_time):
 
