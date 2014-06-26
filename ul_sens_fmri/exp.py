@@ -49,6 +49,15 @@ def run(conf, subj_id, run_num, serial_port=None):
             height=0.05
         )
 
+        trigger_text = psychopy.visual.TextStim(
+            win=win,
+            text="Awaiting scanner trigger...",
+            color=[-1] * 3,
+            pos=(0, -0.1),
+            units="norm",
+            height=0.05
+        )
+
         task_text = psychopy.visual.TextStim(
             win=win,
             text="",
@@ -91,13 +100,10 @@ def run(conf, subj_id, run_num, serial_port=None):
         if "q" in resp:
             raise Exception("User abort")
 
-        instr_text.setText("Awaiting scanner trigger...")
-        instr_text.setPos((0, -0.1))
-        instr_text.setColor([-1] * 3)
-
         _ = [t_text.draw() for t_text in target_text]
         fixation.draw()
-        instr_text.draw()
+        trigger_text.draw()
+
         win.flip()
 
         # wait for the trigger
