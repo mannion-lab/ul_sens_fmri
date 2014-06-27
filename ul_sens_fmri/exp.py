@@ -113,12 +113,16 @@ def run(conf, subj_id, run_num, serial_port=None):
 
         keep_going = True
 
+        curr_i_task = -1
+
         while run_clock.getTime() < conf.exp.run_len_s and keep_going:
 
             i_task = np.where(run_clock.getTime() > task_lut[:, 0])[0][-1]
 
-            task_text.setText("{t:.0f}".format(t=task_lut[i_task, 1]))
-            task_text.setColor(task_lut[i_task, 2])
+            if i_task != curr_i_task:
+                task_text.setText("{t:.0f}".format(t=task_lut[i_task, 1]))
+                task_text.setColor(task_lut[i_task, 2])
+                curr_i_task = i_task
 
             fixation.draw()
 

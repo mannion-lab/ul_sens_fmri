@@ -1,0 +1,56 @@
+#! /usr/bin/env python2
+
+import argparse
+
+import runcmd
+
+import ul_sens_fmri.config
+import ul_sens_fmri.exp
+
+
+def main():
+
+    conf = ul_sens_fmri.config.get_conf()
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("subj_id", help="Subject ID")
+    parser.add_argument("--start_run", help="Start run", type=int, default=1)
+    parser.add_argument(
+        "--end_run",
+        help="End run",
+        type=int,
+        default=conf.exp.n_runs
+    )
+    parser.add_argument(
+        "--serial_port",
+        help="Serial port",
+        type=str,
+        default="/dev/ttyUSB0"
+    )
+
+    args = parser.parse_args()
+
+    run_range = range(
+        args.start_run,
+        args.end_run + 1
+    )
+
+    for run_num in run_range:
+
+        cmd = [
+            "ul_sens_fmri_run",
+            "--serial_port", args.serial_port,
+            args.subj_id,
+            str(run_num)
+        ]
+
+        cmd = " ".join(cmd)
+
+        print cmd
+
+        runcmd.run_cmd(cmd)
+
+
+if __name__ == "__main__":
+    main()
