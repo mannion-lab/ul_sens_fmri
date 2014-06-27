@@ -37,7 +37,8 @@ def run(conf, subj_id, run_num, serial_port=None):
         monitor=conf.exp.monitor_name,
         lut=True,
         fullscr=True,
-        allowGUI=False
+        allowGUI=False,
+        autoLog=False
     ) as win:
 
         instr_text = psychopy.visual.TextStim(
