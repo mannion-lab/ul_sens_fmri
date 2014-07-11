@@ -7,18 +7,13 @@ class ConfigContainer(object):
     pass
 
 
-def get_conf(subj_id=None):
+def get_conf():
 
     conf = ConfigContainer()
 
     conf.stim = _get_stim_conf()
     conf.acq = _get_acq_conf()
     conf.exp = _get_exp_conf()
-    conf.ana = _get_ana_conf()
-    conf.all_subj = _get_subj_conf(subj_id=None)
-
-    if subj_id is not None:
-        conf.subj = _get_subj_conf(subj_id=subj_id)
 
     return conf
 
@@ -192,13 +187,3 @@ def _get_exp_conf():
     exp_conf.task_rate_hz = 3.0
 
     return exp_conf
-
-
-def _get_ana_conf():
-
-    pass
-
-
-def _get_subj_conf(subj_id=None):
-
-    pass
