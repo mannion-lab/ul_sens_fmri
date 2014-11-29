@@ -1,3 +1,8 @@
 #!/usr/bin/env bash
 
-xrandr --addmode eDP2 1920x1200 && disper -r "1920x1200" -c
+#xrandr --addmode eDP2 1920x1200 && disper -r "1920x1200" -c
+
+# this is if need to run with just the laptop (for screenshots)
+xrandr --newmode "1920x1200x60.00"  193.622400  1920 2048 2256 2592  1200 1204 1208 1245  -HSync +VSync
+xrandr --addmode eDP2 "1920x1200x60.00"
+xrandr --output eDP2 --mode "1920x1200x60.00"

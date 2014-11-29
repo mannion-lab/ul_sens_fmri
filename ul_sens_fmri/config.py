@@ -94,6 +94,9 @@ def _get_exp_conf():
     exp_conf = ConfigContainer()
 
     exp_conf.log_data_path = "/sci/study/ul_sens_fmri/log_data"
+    exp_conf.sshot_path = "/sci/study/ul_sens_fmri/sshots"
+
+    exp_conf.take_sshots = False
 
     exp_conf.exp_id = "ul_sens_fmri"
 
