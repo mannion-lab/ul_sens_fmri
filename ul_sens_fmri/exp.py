@@ -204,6 +204,24 @@ def update_stim(conf, stim, run_seq, flip_time):
 
                 stim.set_contrast(pres_loc, contrast)
 
+                if contrast == 1 and conf.exp.take_sshots:
+
+                    fname = (
+                        "ul_sens_trial_" + str(i_trial) +
+                        "_src_loc_" + str(run_seq[i_pres, i_trial, 1]) +
+                        "_img_id_" + str(run_seq[i_pres, i_trial, 2]) +
+                        "_pres_loc_" + str(pres_loc) +
+                        ".png"
+                    )
+
+                    stim._win.getMovieFrame()
+                    stim._win.saveMovieFrames(
+                        os.path.join(
+                            conf.exp.sshot_path,
+                            fname
+                        )
+                    )
+
             else:
                 stim.set_contrast(pres_loc, 0.0)
 
